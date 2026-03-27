@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Converter Codename → Psych (Notas)</title>
+</head>
+<body>
+
+<h2>Convertir Chart a Psych Engine (solo notas)</h2>
+<input type="file" id="fileInput">
+<button onclick="convert()">Convertir</button>
+
+<script>
+function convert() {
+  const file = document.getElementById('fileInput').files[0];
+  if (!file) return alert("Subí un JSON bro");
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const data = JSON.parse(e.target.result);
+
+    let notes = [];
+
+    data.strumLines.forEach((line, playerIndex) => {
+      line.notes.forEach(note => {
+        let mustHit = (line.type === 1);
+
+        notes.push({
+          strumTime: note.time,
+          noteData: note.id,
+          sustainLength: note.sLen,
+          mustPress: mustHit
+        });
+      });
+    });
+
+    let psych = {
+      song: {
+        song: "converted",
+        notes: [{
+          sectionNotes: notes.map(n => [
+            n.strumTime,
+            n.noteData,
+            n.sustainLength,
+            n.mustPress
+          ]),
+          mustHitSection: false,
+          lengthInSteps: 16,
+          typeOfSection: 0,
+          bpm: 120,
+          changeBPM: false,
+          altAnim: false
+        }],
+        bpm: 120,
+        speed: data.scrollSpeed || 1
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(psych, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "psych_chart.json";
+    a.click();
+  };
+
+  reader.readAsText(file);
+}
+</script>
+
+</body>
+</html>
